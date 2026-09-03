@@ -431,6 +431,46 @@ mod tests {
 
     const SAMPLE: &str = "Inbox:\n\t☐ Write the parser @today\n\t✔ Pick a name @done(26-09-02 10:00)\n\t\tnested note\n\n- dash task\nSomeday:\n\t✘ nope @cancelled(26-09-02 10:00)\n";
 
+    /// The tutorial that ships with PlainTasks touches every construct the
+    /// format has, with irregular indentation on purpose.
+    #[test]
+    fn plaintasks_tutorial_roundtrips_and_classifies() {
+        let src = include_str!("../../tests/fixtures/plaintasks-tutorial.todo");
+        let doc = Document::parse(src, "\t");
+        assert_eq!(doc.serialize(), src);
+        let projects: Vec<&str> = doc
+            .lines
+            .iter()
+            .filter_map(|l| match &l.kind {
+                Kind::Project { name, .. } => Some(name.as_str()),
+                _ => None,
+            })
+            .collect();
+        assert!(projects.contains(&"How to Use PlainTasks"), "{projects:?}");
+        assert!(projects.contains(&"Projects"));
+        assert!(projects.contains(&"Tagging"));
+        assert!(projects.contains(&"Archive"));
+        let (open, done, _) = doc.count_tasks();
+        assert!(open > 20, "open={open}");
+        assert_eq!(done, 1);
+        let archived = doc
+            .lines
+            .iter()
+            .find(|l| l.status() == Some(Status::Done))
+            .unwrap();
+        assert_eq!(
+            tags::tag_value(archived.text(), "done").as_deref(),
+            Some("12-09-07 07:30")
+        );
+        // Every line under a project is deeper than that project.
+        let tasks = doc.find_project("Tasks").unwrap();
+        assert!(doc.block_end(tasks) > tasks + 10);
+        assert!(!doc
+            .lines
+            .iter()
+            .any(|l| matches!(&l.kind, Kind::Note { text } if text.starts_with('☐'))));
+    }
+
     #[test]
     fn roundtrips_untouched_files() {
         for src in [

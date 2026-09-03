@@ -495,6 +495,20 @@ mod tests {
     }
 
     #[test]
+    fn renders_the_plaintasks_tutorial() {
+        let mut app = app_with(include_str!("../tests/fixtures/plaintasks-tutorial.todo"));
+        let out = render(&mut app, 110, 60);
+        println!("{out}");
+        assert!(out.contains("How to Use PlainTasks:"), "{out}");
+        assert!(
+            out.contains("  ☐ Anything with colon at the end of the line is a project title"),
+            "{out}"
+        );
+        assert!(out.contains("    New:"), "{out}");
+        assert!(out.contains("      ☐ "), "{out}");
+    }
+
+    #[test]
     fn insert_mode_places_cursor_after_text() {
         let mut app = app_with("☐ ab\n");
         app.handle_key(ratatui::crossterm::event::KeyEvent::new(

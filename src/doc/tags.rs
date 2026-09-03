@@ -13,6 +13,18 @@ pub struct Tag {
     pub end: usize,
 }
 
+/// Tags whose value may be separated from the name by spaces.
+const SPACED_VALUE_TAGS: &[&str] = &[
+    "done",
+    "cancelled",
+    "started",
+    "lasted",
+    "created",
+    "toggle",
+    "due",
+    "est",
+];
+
 fn is_name_char(c: char) -> bool {
     c.is_alphanumeric() || c == '_' || c == '-' || c == '.'
 }
@@ -46,11 +58,24 @@ pub fn parse_tags(text: &str) -> Vec<Tag> {
         }
         let mut end = name_end;
         let mut value = None;
-        if bytes.get(name_end) == Some(&b'(') {
-            if let Some(close) = text[name_end + 1..].find(')') {
-                let v = &text[name_end + 1..name_end + 1 + close];
-                value = Some(v.to_string());
-                end = name_end + 1 + close + 1;
+        let name = &text[name_start..name_end];
+        // Older PlainTasks wrote `@done (date)`; accept the gap for date tags.
+        let paren_at = if bytes.get(name_end) == Some(&b'(') {
+            Some(name_end)
+        } else if SPACED_VALUE_TAGS
+            .iter()
+            .any(|t| t.eq_ignore_ascii_case(name))
+        {
+            let after = &text[name_end..];
+            let ws = after.len() - after.trim_start_matches(' ').len();
+            (ws > 0 && after[ws..].starts_with('(')).then_some(name_end + ws)
+        } else {
+            None
+        };
+        if let Some(open) = paren_at {
+            if let Some(close) = text[open + 1..].find(')') {
+                value = Some(text[open + 1..open + 1 + close].to_string());
+                end = open + 1 + close + 1;
             }
         }
         tags.push(Tag {
@@ -153,6 +178,16 @@ mod tests {
             &"buy milk @today @due(24-01-05) mail me@example.com"[tags[1].start..tags[1].end],
             "@due(24-01-05)"
         );
+    }
+
+    #[test]
+    fn accepts_space_before_value_for_date_tags() {
+        let tags = parse_tags("learn @done (12-09-07 07:30)");
+        assert_eq!(tags[0].value.as_deref(), Some("12-09-07 07:30"));
+        assert_eq!(remove_tag("learn @done (12-09-07 07:30)", "done"), "learn");
+        // Only date tags get that leniency; a parenthesised aside stays text.
+        let tags = parse_tags("x @home (call first)");
+        assert_eq!(tags[0].value, None);
     }
 
     #[test]
