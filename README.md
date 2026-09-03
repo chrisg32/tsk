@@ -38,7 +38,7 @@ Projects end in `:`, tasks are prefixed with a box, tags are `@word` and may tak
 ### Standalone
 
 ```
-cargo install --git https://github.com/chrisg32/herdr-plugin-tsk
+cargo install --git https://github.com/chrisg32/tsk
 tsk ~/todo.todo
 ```
 
@@ -47,10 +47,12 @@ Prebuilt binaries will be attached to GitHub Releases so a Rust toolchain isn't 
 ### As a herdr plugin
 
 ```
-herdr plugin install chrisg32/herdr-plugin-tsk
+herdr plugin install chrisg32/tsk
 ```
 
-The plugin declares a pane running the same `tsk` binary, plus actions invocable from herdr's command palette. Configuration lives in `HERDR_PLUGIN_CONFIG_DIR` under herdr and in `~/.config/tsk` standalone.
+The repository carries the `herdr-plugin` topic and a `herdr-plugin.toml` at its root, which is all herdr
+needs — the repository name itself is not significant. The plugin declares a pane running the same `tsk`
+binary, plus actions invocable from herdr's command palette. Configuration lives in `HERDR_PLUGIN_CONFIG_DIR` under herdr and in `~/.config/tsk` standalone.
 
 ## Development
 
