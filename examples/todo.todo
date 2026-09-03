@@ -1,0 +1,16 @@
+Inbox:
+	☐ Try tsk: press ? for the key list @today
+	☐ Add a task with o, finish it with Space
+		Notes live under tasks. Links open with L: https://github.com/chrisg32/tsk
+	☐ Something urgent @critical @due(2026-01-01)
+	✔ Pick a name @done(26-09-02 10:15)
+
+Work:
+	Release:
+		☐ Tag v0.1.0 @high
+		☐ Write the changelog @low
+	☐ Start the timer with s, it records @lasted when done @started(26-09-02 09:00)
+
+Someday:
+	☐ Sync with a phone app
+	✘ Rewrite it in Lua @cancelled(26-09-02 10:20)

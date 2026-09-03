@@ -1,0 +1,37 @@
+id = "tsk"
+name = "tsk"
+version = "0.1.0"
+min_herdr_version = "0.8.2"
+description = "Plain-text tasks (PlainTasks/TaskPaper format) in a terminal pane"
+platforms = ["linux", "macos"]
+
+# Puts a `tsk` binary at bin/tsk: a prebuilt release when one matches this
+# checkout's version and platform, otherwise `cargo build --release`.
+[[build]]
+command = ["sh", "scripts/install.sh"]
+
+# The TUI itself. Runs the same binary you'd run standalone; herdr's
+# environment switches on the extras (config dir, pane callbacks).
+[[panes]]
+id = "main"
+title = "tsk"
+placement = "overlay"
+command = ["bin/tsk"]
+
+# Actions are what keybindings and the command palette invoke. Each one asks
+# herdr to open the pane above, with the workspace's directory as cwd so a
+# per-project todo file is found automatically.
+[[actions]]
+id = "open"
+title = "tsk: open tasks"
+command = ["bin/tsk", "herdr", "open"]
+
+[[actions]]
+id = "open-split"
+title = "tsk: open tasks in a split"
+command = ["bin/tsk", "herdr", "open", "--placement", "split"]
+
+[[actions]]
+id = "open-tab"
+title = "tsk: open tasks in a tab"
+command = ["bin/tsk", "herdr", "open", "--placement", "tab"]

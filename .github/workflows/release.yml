@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must match Cargo.toml and herdr-plugin.toml
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          cargo_v=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          plugin_v=$(sed -n 's/^version = "\(.*\)"/\1/p' herdr-plugin.toml | head -1)
+          test "$tag" = "$cargo_v" || { echo "tag v$tag != Cargo.toml $cargo_v"; exit 1; }
+          test "$tag" = "$plugin_v" || { echo "tag v$tag != herdr-plugin.toml $plugin_v"; exit 1; }
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          asset="tsk-${GITHUB_REF_NAME}-${{ matrix.target }}.tar.gz"
+          tar -C "target/${{ matrix.target }}/release" -czf "$asset" tsk
+          echo "ASSET=$asset" >> "$GITHUB_ENV"
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ASSET }}
+          generate_release_notes: true
